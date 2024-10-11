@@ -113,6 +113,8 @@ def airscan(
                     subprocess.run(["sudo chmod 777 /home/netfuck"], shell=True)
                     subprocess.run(["sudo rm -r /home/netfuck/"], shell=True)
                     airscan_commands(netdevice)
+                else:
+                    exit()
             else:
                 airscan_commands(netdevice)
 
@@ -138,15 +140,12 @@ if __name__ == "__main__":
     print(args)
 
     if options.airscan:
-
         airscan(options.airscan)
 
     if options.ddos:
         if args[0] is None or args[1] is None:
             ddos(options.ddos, int(args[0]), int(args[1]))
         ddos(options.ddos, int(args[0]), int(args[1]))
-    else:
-        parser.print_help()
 
 
 # Local Variables: ***
