@@ -109,9 +109,10 @@ def airscan(
             myfile = Path("/home/netfuck/output.png")
             if myfile.is_file():
                 airscan_previous_files = input("Previous Files have been found, if you continue they will be overwritten. Are you sure you want to continue? (Y/N): ")
-                if airscan_previous_files == "Y" or airscan_previous_files == "yes":
-                    subprocess.run(["rm -d /home/netfuck"], shell=True)
-                    airscan_commands()
+                if airscan_previous_files == "Y" or airscan_previous_files == "yes" or airscan_previous_files == "y":
+                    subprocess.run(["sudo chmod 777 /home/netfuck"], shell=True)
+                    subprocess.run(["sudo rm -r /home/netfuck/"], shell=True)
+                    airscan_commands(netdevice)
             else:
                 airscan_commands(netdevice)
 
@@ -120,7 +121,7 @@ def airscan(
             exit(0)
 
     else:
-        print("Exiting")
+        print(f"{RED}Exiting")
         exit(0)
 
 if __name__ == "__main__":
@@ -137,6 +138,7 @@ if __name__ == "__main__":
     print(args)
 
     if options.airscan:
+
         airscan(options.airscan)
 
     if options.ddos:
