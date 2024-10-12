@@ -132,6 +132,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-a", "--airscan", dest="airscan", type=str, help="airscan [IP] [PORT]: scans and displays current and closest network.")
     parser.add_argument("-d", "--ddos", dest="ddos", type=str, help="ddos: sends packets to target")
+    parser.add_argument("-n", "--nmap", dest="nmap", type=str, help="nmap: scans open ports on target networks")
 
 
 
