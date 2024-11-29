@@ -9,8 +9,10 @@ import threading
 from pathlib import Path
 from argparse import ArgumentParser
 import random
+import platform
 
 uname = os.getlogin() # gets username eg kai for home/kai/ makes it easier for users to get into dir
+oSystem = platform.system()
 
 GREEN = '\033[92m'
 YELLOW = '\033[93m'
@@ -85,6 +87,8 @@ def airscan_commands(netdevice):
     subprocess.run([f"sudo airgraph-ng -i /home/{uname}/netfuck/Airscan/output-01.csv -o /home/{uname}/netfuck/Airscan/output.png -g CAPR"], shell=True)
     subprocess.run([f"sudo airmon-ng stop {netdevice}mon"], shell=True)
     subprocess.run([f"xdg-open /home/{uname}/netfuck/Airscan/output.png"], shell=True)
+        
+
 
 # Aircrack Dir function
 def airscan(
